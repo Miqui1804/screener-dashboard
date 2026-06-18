@@ -876,4 +876,186 @@ const SCREENERS = {
     title: 'RSC Mansfield · Top 15 vs S&P 500 (1 año)',
     data: DATA_RSC,
     chips: ['Fuerza relativa Mansfield vs SPY (proxy S&amp;P 500)','Ventana: 1 año (252 sesiones)','Universo: Market Cap &gt; $300M y Vol. medio &gt; 100K','Ranking: Top 15 por RSC Mansfield'],
-    note: 'Metodología: para cada acción del universo filtrado (~3.227 candidatas tras el filtro de liquidez, sobre un universo total d
+    note: 'Metodología: para cada acción del universo filtrado (~3.227 candidatas tras el filtro de liquidez, sobre un universo total de ~5.588), se calculó el ratio diario Precio Acción / Precio SPY durante el último año, su media móvil de 252 sesiones (≈52 semanas), y el RS de Mansfield = ((ratio de hoy / media móvil) - 1) × 100. Un valor positivo indica que la acción está más fuerte que el S&P 500 respecto a su propia tendencia relativa de 1 año. El ranking muestra las 15 acciones con mayor RSC Mansfield, junto a su variación mensual de precio (puede ser independiente del RSC: una acción puede tener RSC alto y haber caído el último mes si venía de una subida aún mayor).',
+    counterLabel: 'mejores acciones por RSC Mansfield',
+    sortOptions: [
+      ['rsc_desc','RSC Mansfield (desc)'],
+      ['ch1m_desc','Variación mensual (desc)'],
+      ['mktcap_desc','Market Cap (desc)'],
+      ['price_desc','Precio (desc)'],
+      ['vol_desc','Volumen (desc)'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) {
+        case 'rsc_desc':    return b[5]-a[5];
+        case 'ch1m_desc':   return b[6]-a[6];
+        case 'mktcap_desc': return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'price_desc':  return parseNum(b[3])-parseNum(a[3]);
+        case 'vol_desc':    return parseNum(b[4])-parseNum(a[4]);
+        case 'ticker_az':   return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, price, volume, rsc, ch1m] = d;
+      const ch1mClass = ch1m >= 0 ? 'dist-green' : 'dist-red';
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge ${ch1mClass}">${ch1m>=0?'+':''}${ch1m.toFixed(1)}% mes</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${price}</span>
+      <span class="mktcap">${fmtMktCap(mktcap)}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-purple"><div class="stat-label">RSC Mansfield</div><div class="stat-value">${rsc>=0?'+':''}${rsc.toFixed(1)}</div></div>
+      <div class="stat stat-green"><div class="stat-label">Variación mensual</div><div class="stat-value">${ch1m>=0?'+':''}${ch1m.toFixed(1)}%</div></div>
+      <div class="stat stat-blue"><div class="stat-label">Volumen</div><div class="stat-value">${fmtVol(volume)}</div></div>
+    </div>
+  </div>`;
+    }
+  },
+
+  rsc2: {
+    title: 'RSC Mansfield · Top 15 S&P 500 + Nasdaq 100',
+    data: DATA_RSC2,
+    chips: ['Fuerza relativa Mansfield vs SPY (proxy S&amp;P 500)','Ventana: 1 año (252 sesiones)','Universo: 517 tickers únicos (S&amp;P 500 + Nasdaq 100)','Ranking: Top 15 por RSC Mansfield'],
+    note: 'Metodología: igual que el screener RSC Mansfield general, pero el ranking se calcula solo sobre los 517 tickers únicos que componen el S&amp;P 500 (503 acciones) y el Nasdaq 100 (101 acciones, con solapamiento). Para cada acción se calculó el ratio diario Precio Acción / Precio SPY durante el último año, su media móvil de 252 sesiones (≈52 semanas), y el RS de Mansfield = ((ratio de hoy / media móvil) - 1) × 100. El ranking muestra las 15 acciones de grandes índices con mayor RSC Mansfield, junto a su variación mensual de precio.',
+    counterLabel: 'mejores acciones por RSC Mansfield (S&amp;P 500 + Nasdaq 100)',
+    sortOptions: [
+      ['rsc_desc','RSC Mansfield (desc)'],
+      ['ch1m_desc','Variación mensual (desc)'],
+      ['mktcap_desc','Market Cap (desc)'],
+      ['price_desc','Precio (desc)'],
+      ['vol_desc','Volumen (desc)'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) {
+        case 'rsc_desc':    return b[5]-a[5];
+        case 'ch1m_desc':   return b[6]-a[6];
+        case 'mktcap_desc': return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'price_desc':  return parseNum(b[3])-parseNum(a[3]);
+        case 'vol_desc':    return parseNum(b[4])-parseNum(a[4]);
+        case 'ticker_az':   return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, price, volume, rsc, ch1m] = d;
+      const ch1mClass = ch1m >= 0 ? 'dist-green' : 'dist-red';
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge ${ch1mClass}">${ch1m>=0?'+':''}${ch1m.toFixed(1)}% mes</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${price}</span>
+      <span class="mktcap">${fmtMktCap(mktcap)}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-purple"><div class="stat-label">RSC Mansfield</div><div class="stat-value">${rsc>=0?'+':''}${rsc.toFixed(1)}</div></div>
+      <div class="stat stat-green"><div class="stat-label">Variación mensual</div><div class="stat-value">${ch1m>=0?'+':''}${ch1m.toFixed(1)}%</div></div>
+      <div class="stat stat-blue"><div class="stat-label">Volumen</div><div class="stat-value">${fmtVol(volume)}</div></div>
+    </div>
+  </div>`;
+    }
+  }
+};
+
+/* ============ STATE / RENDERING ============ */
+let currentKey = 'crecimiento';
+
+function buildSortSelect(cfg) {
+  const sel = document.getElementById('sortSelect');
+  sel.innerHTML = cfg.sortOptions.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('');
+}
+
+function buildChips(cfg) {
+  const area = document.getElementById('chipsArea');
+  let html = cfg.chips.map(c => `<span class="chip">${c}</span>`).join('');
+  if (cfg.chipWarn) html += `<span class="chip chip-warn">${cfg.chipWarn}</span>`;
+  area.innerHTML = html;
+  document.getElementById('noteArea').innerHTML = cfg.note || '';
+  document.getElementById('noteArea').style.display = cfg.note ? 'block' : 'none';
+  document.getElementById('counterLabel').textContent = cfg.counterLabel;
+}
+
+function applyFilters() {
+  const cfg = SCREENERS[currentKey];
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const sort = document.getElementById('sortSelect').value;
+  let filtered = cfg.data.filter(d =>
+    !q || d[0].toLowerCase().includes(q) || d[1].toLowerCase().includes(q)
+  );
+  filtered.sort((a,b) => cfg.sortFn(a,b,sort));
+  const grid = document.getElementById('stockGrid');
+  grid.innerHTML = filtered.length
+    ? filtered.map(cfg.renderCard).join('')
+    : '<div class="no-results">No hay resultados para tu búsqueda.</div>';
+  document.getElementById('showingText').textContent = `Mostrando ${filtered.length} de ${cfg.data.length}`;
+  document.getElementById('matchCount').textContent = filtered.length;
+}
+
+function switchScreener() {
+  currentKey = document.getElementById('screenerSelect').value;
+  const cfg = SCREENERS[currentKey];
+  document.getElementById('searchInput').value = '';
+  buildChips(cfg);
+  buildSortSelect(cfg);
+  applyFilters();
+}
+
+/* ============ TRADINGVIEW MODAL ============ */
+let tvWidget = null;
+function openChart(ticker) {
+  document.getElementById('modalTitle').textContent = ticker;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('tv_chart_container').innerHTML = '';
+  tvWidget = new TradingView.widget({
+    container_id: 'tv_chart_container',
+    symbol: ticker,
+    autosize: true,
+    interval: 'D',
+    timezone: 'Etc/UTC',
+    theme: 'dark',
+    style: '1',
+    locale: 'es',
+    toolbar_bg: '#232F3E',
+    enable_publishing: false,
+    allow_symbol_change: true,
+    hide_side_toolbar: false
+  });
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('tv_chart_container').innerHTML = '';
+}
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ============ INIT ============ */
+const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+document.getElementById('fecha').textContent = hoy;
+document.getElementById('footerDate').textContent = hoy;
+buildChips(SCREENERS[currentKey]);
+buildSortSelect(SCREENERS[currentKey]);
+applyFilters();
+</script>
+</body>
+</html>
