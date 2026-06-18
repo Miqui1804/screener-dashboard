@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Screeners · Acciones US</title>
+<style>
+  :root {
+    --navy: #232F3E;
+    --orange: #FF9900;
+    --light: #F7F7F7;
+    --green: #1F8E3D;
+    --blue: #1F6FB5;
+    --purple: #7A4FB7;
+    --red: #C0392B;
+    --muted: #6B7280;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--light); color: var(--navy); }
+
+  /* HEADER */
+  .header {
+    background: var(--navy);
+    border-left: 14px solid var(--orange);
+    padding: 32px 40px 28px;
+  }
+  .header h1 {
+    font-family: Georgia, serif;
+    font-size: 38px;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+  .header .subtitle {
+    font-style: italic;
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    margin-bottom: 18px;
+  }
+  .header .subtitle a { color: var(--orange); text-decoration: none; }
+
+  .screener-select {
+    margin-bottom: 18px;
+  }
+  .screener-select select {
+    font-size: 18px;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 2px solid var(--orange);
+    background: var(--navy);
+    color: var(--white);
+    cursor: pointer;
+    outline: none;
+    max-width: 100%;
+  }
+  .screener-select select option { background: var(--navy); color: var(--white); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    border: 1.5px solid var(--orange);
+    color: rgba(255,255,255,0.9);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .chip-warn {
+    border-color: var(--red);
+    color: rgba(255,255,255,0.85);
+    background: rgba(192,57,43,0.25);
+  }
+  .note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 20px;
+    max-width: 760px;
+  }
+  .counter { color: var(--orange); font-size: 32px; font-weight: 700; }
+  .counter-label { font-size: 16px; color: rgba(255,255,255,0.7); font-weight: 400; margin-left: 8px; }
+
+  /* TOOLBAR */
+  .toolbar {
+    background: var(--white);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 14px 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .toolbar input {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 230px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .toolbar input:focus { border-color: var(--orange); }
+  .toolbar select {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    background: var(--white);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .toolbar select:focus { border-color: var(--orange); }
+  .showing { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+  /* GRID */
+  .grid-container { padding: 24px 40px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    transition: box-shadow 0.2s, transform 0.15s;
+    cursor: pointer;
+  }
+  .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.12); transform: translateY(-2px); }
+
+  .card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .logo-box {
+    background: var(--navy);
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    padding: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .logo-box img { width: 40px; height: 40px; object-fit: contain; }
+  .logo-fallback {
+    color: var(--white);
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-all;
+  }
+
+  .card-info { flex: 1; min-width: 0; }
+  .ticker-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap; }
+  .ticker { font-size: 19px; font-weight: 700; color: var(--navy); }
+  .ticker:hover { text-decoration: underline; color: var(--blue); }
+  .dist-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.05);
+  }
+  .dist-green { color: var(--green); }
+  .dist-orange { color: var(--orange); }
+  .dist-red { color: var(--red); }
+
+  .company-name {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .price-row {
+    background: var(--light);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .price { font-size: 18px; font-weight: 700; color: var(--navy); }
+  .mktcap { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .stat { padding: 6px 8px; border-left: 3px solid; }
+  .stat-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .stat-value { font-size: 13px; font-weight: 700; }
+  .stat-green { border-color: var(--green); }
+  .stat-green .stat-value { color: var(--green); }
+  .stat-purple { border-color: var(--purple); }
+  .stat-purple .stat-value { color: var(--purple); }
+  .stat-blue { border-color: var(--blue); }
+  .stat-blue .stat-value { color: var(--blue); }
+  .stat-orange { border-color: var(--orange); }
+  .stat-orange .stat-value { color: var(--orange); }
+
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 3px solid var(--orange);
+    background: var(--white);
+    padding: 20px 40px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+  footer a { color: var(--orange); text-decoration: none; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--navy);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 1000px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 2px solid var(--orange);
+  }
+  .modal-header h2 { color: var(--white); font-size: 20px; font-family: Georgia, serif; }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 26px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 6px;
+  }
+  .modal-close:hover { color: var(--orange); }
+  .modal-chart-container { flex: 1; }
+  #tv_chart_container { width: 100%; height: 100%; }
+
+  @media (max-width: 600px) {
+    .header { padding: 24px 20px 20px; }
+    .header h1 { font-size: 26px; }
+    .toolbar { padding: 12px 16px; }
+    .toolbar input { width: 100%; }
+    .grid-container { padding: 16px; }
+    .showing { margin-left: 0; }
+    .modal-box { height: 90vh; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Dashboard de Screeners · Acciones US</h1>
+  <p class="subtitle">Datos del <span id="fecha"></span> · vía <a href="https://stockanalysis.com/stocks/screener/" target="_blank">stockanalysis.com</a> · haz clic en un ticker para ver su gráfico</p>
+
+  <div class="screener-select">
+    <select id="screenerSelect" onchange="switchScreener()">
+      <option value="crecimiento">Crecimiento · 7 filtros de calidad/crecimiento</option>
+      <option value="victor">Acciones Top · Crecimiento + Calidad (10 filtros)</option>
+      <option value="oneill">Oneill · Momentum + Calidad (6 filtros)</option>
+      <option value="banderas">Banderas · Patrón Mástil + Bandera (técnico)</option>
+      <option value="rsc">RSC Mansfield · Top 15 vs S&amp;P 500 (1 año)</option>
+      <option value="rsc2">RSC Mansfield · Top 15 S&amp;P 500 + Nasdaq 100</option>
+    </select>
+  </div>
+
+  <div class="chips" id="chipsArea"></div>
+  <p class="note" id="noteArea"></p>
+  <div>
+    <span class="counter" id="matchCount">0</span>
+    <span class="counter-label" id="counterLabel">valores cumplen los filtros aplicados</span>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input type="text" id="searchInput" placeholder="🔍  Buscar ticker o nombre…" oninput="applyFilters()">
+  <select id="sortSelect" onchange="applyFilters()"></select>
+  <span class="showing" id="showingText"></span>
+</div>
+
+<div class="grid-container">
+  <div class="grid" id="stockGrid"></div>
+</div>
+
+<footer>
+  <span id="footerDate"></span> &nbsp;·&nbsp; Fuente de datos: <a href="https://stockanalysis.com" target="_blank">stockanalysis.com</a> (sesión navegador) · Banderas: histórico diario completo vía API interna de stockanalysis.com
+</footer>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modalTitle">TICKER</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-chart-container">
+      <div id="tv_chart_container"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+/* ============ DATASETS ============ */
+
+// CRECIMIENTO: [ticker, name, mktcap, price, revgrowth_yoy, avgvol, eps_next_yr, w52_high_chg]
+const DATA_CRECIMIENTO = [
+["AMD","Advanced Micro Devices, Inc.","845.30B","518.40","34.97%","31,446,623","77.86%","-7.16%"],
+["ARM","Arm Holdings plc","440.05B","412.00","22.79%","13,180,837","41.38%","-3.17%"],
+["SNDK","Sandisk Corporation","298.39B","2,014.95","82.76%","10,699,187","179.67%","-7.03%"],
+["ANET","Arista Networks, Inc.","211.55B","168.00","30.57%","8,418,924","22.60%","-6.56%"],
+["CRWD","CrowdStrike Holdings, Inc.","173.94B","683.30","23.17%","3,550,776","26.80%","-13.03%"],
+["DDOG","Datadog, Inc.","83.06B","233.35","29.54%","5,893,450","17.70%","-16.27%"],
+["SNOW","Snowflake Inc.","82.92B","239.24","31.07%","10,702,808","39.01%","-16.05%"],
+["NET","Cloudflare, Inc.","82.18B","232.51","31.55%","3,888,240","31.42%","-16.01%"],
+["BE","Bloom Energy Corporation","81.62B","286.94","56.53%","10,180,084","104.57%","-11.12%"],
+["LITE","Lumentum Holdings Inc.","68.62B","882.00","68.98%","5,738,447","120.44%","-18.76%"],
+["ALAB","Astera Labs, Inc.","63.57B","370.89","104.18%","6,124,023","40.07%","-6.84%"],
+["ARGX","argenx SE","54.54B","884.02","79.43%","314,705","31.54%","-5.41%"],
+["CLS","Celestica Inc.","46.36B","387.61","36.72%","2,157,997","45.38%","-18.23%"],
+["CRDO","Credo Technology Group Holding Ltd","46.06B","247.01","205.68%","9,438,063","43.17%","-8.59%"],
+["VIK","Viking Holdings Ltd","42.25B","94.69","20.78%","3,119,045","31.80%","-1.92%"],
+["WAT","Waters Corporation","35.64B","363.02","26.37%","902,874","13.44%","-12.35%"],
+["MTZ","MasTec, Inc.","29.02B","372.07","22.59%","1,109,051","32.67%","-15.71%"],
+["FSLR","First Solar, Inc.","28.75B","267.56","27.31%","2,952,308","34.57%","-16.63%"],
+["MTSI","MACOM Technology Solutions Holdings, Inc.","28.55B","374.26","27.05%","1,576,568","36.20%","-10.66%"],
+["STRL","Sterling Infrastructure, Inc.","26.45B","861.96","36.96%","652,081","23.15%","-14.29%"],
+["TTMI","TTM Technologies, Inc.","21.18B","204.00","23.10%","2,566,836","32.84%","-2.56%"],
+["AS","Amer Sports, Inc.","20.83B","35.80","28.85%","4,601,474","25.16%","-16.28%"],
+["INCY","Incyte Corporation","19.95B","99.84","21.48%","1,787,720","19.07%","-11.09%"],
+["MAIR","Madison Air Solutions Corporation","19.38B","38.66","27.26%","1,108,265","20.75%","-13.01%"],
+["TLN","Talen Energy Corporation","18.74B","412.78","55.06%","789,055","49.43%","-8.53%"],
+["FPS","Forgent Power Solutions, Inc.","18.62B","61.18","386.60%","6,963,899","78.55%","-6.67%"],
+["NVMI","Nova Ltd.","18.03B","567.24","21.32%","433,072","23.39%","-7.91%"],
+["ARXS","Arxis, Inc.","16.91B","41.20","114.14%","876,369","23.81%","-15.24%"],
+["NBIX","Neurocrine Biosciences, Inc.","15.92B","158.29","28.59%","1,095,940","23.78%","-6.65%"],
+["MOD","Modine Manufacturing Company","15.15B","286.92","23.13%","1,424,816","45.48%","-11.24%"],
+["JHX","James Hardie Industries plc","14.50B","25.64","24.71%","8,386,826","26.45%","-14.03%"],
+["DY","Dycom Industries, Inc.","14.31B","476.40","29.76%","549,711","20.14%","-15.90%"],
+["SANM","Sanmina Corporation","13.51B","252.01","44.48%","773,397","16.33%","-12.70%"],
+["BTSG","BrightSpring Health Services, Inc.","13.35B","64.06","27.96%","3,307,424","25.95%","-1.04%"],
+["BROS","Dutch Bros Inc.","12.51B","66.66","28.39%","3,457,067","32.70%","-10.70%"],
+["VIAV","Viavi Solutions Inc.","12.42B","50.71","30.59%","6,544,184","36.61%","-16.08%"],
+["ARW","Arrow Electronics, Inc.","11.81B","230.94","20.49%","623,079","7.17%","-1.50%"],
+["SNEX","StoneX Group Inc.","10.58B","133.51","23.67%","722,308","3.74%","-4.12%"],
+["CAVA","CAVA Group, Inc.","10.26B","88.11","24.08%","3,439,178","36.80%","-10.81%"],
+["ALGM","Allegro MicroSystems, Inc.","10.15B","54.49","22.77%","2,160,605","40.86%","-6.18%"],
+["FROG","JFrog Ltd.","9.59B","79.20","25.04%","2,371,320","17.67%","-11.17%"],
+["KRYS","Krystal Biotech, Inc.","9.55B","324.12","25.15%","236,287","20.35%","-2.22%"],
+["LGN","Legence Corp.","9.32B","86.22","44.33%","1,084,230","21.50%","-19.60%"],
+["OSCR","Oscar Health, Inc.","8.49B","28.19","31.95%","7,214,878","36.18%","-5.45%"],
+["HALO","Halozyme Therapeutics, Inc.","8.27B","69.71","39.12%","1,646,441","21.52%","-15.22%"],
+["ECG","Everus Construction Group, Inc.","7.96B","156.04","29.70%","518,861","10.57%","-9.06%"],
+["MXL","MaxLinear, Inc.","7.68B","85.78","40.89%","4,436,838","40.21%","-19.29%"],
+["CWAN","Clearwater Analytics Holdings, Inc.","7.27B","24.27","73.49%","2,895,695","27.56%","-0.70%"],
+["SLAB","Silicon Laboratories Inc.","7.25B","219.72","25.14%","370,863","51.10%","-0.53%"],
+["TGTX","TG Therapeutics, Inc.","7.14B","50.38","81.26%","1,924,704","87.09%","-0.83%"],
+["ROAD","Construction Partners, Inc.","6.97B","123.31","48.81%","583,420","26.06%","-18.34%"],
+["RSI","Rush Street Interactive, Inc.","6.84B","29.37","28.21%","1,941,153","38.74%","-5.14%"],
+["LQDA","Liquidia Corporation","6.07B","68.23","1,936.66%","1,852,009","60.11%","-6.82%"],
+["SSRM","SSR Mining Inc.","6.00B","31.80","75.12%","2,443,430","9.08%","-12.91%"],
+["PRM","Perimeter Solutions, Inc.","5.87B","36.00","22.99%","1,278,812","15.95%","-2.57%"],
+["PACS","PACS Group, Inc.","5.68B","35.86","22.16%","789,434","6.09%","-16.76%"],
+["HNGE","Hinge Health, Inc.","5.23B","67.53","49.78%","1,679,054","30.04%","-4.48%"],
+["TVTX","Travere Therapeutics, Inc.","4.97B","53.49","96.03%","1,908,437","207.76%","-1.65%"],
+["GBTG","Global Business Travel Group, Inc.","4.89B","9.37","20.67%","3,209,210","21.16%","-1.78%"],
+["XMTR","Xometry, Inc.","4.82B","85.70","29.10%","865,997","76.05%","-14.18%"],
+["ENVA","Enova International, Inc.","4.81B","192.90","21.15%","246,746","19.12%","-0.33%"],
+["COCO","The Vita Coco Company, Inc.","4.80B","84.03","23.05%","908,694","15.20%","-1.59%"],
+["RELY","Remitly Global, Inc.","4.29B","20.36","27.27%","3,921,153","20.58%","-18.30%"],
+["ALHC","Alignment Healthcare, Inc.","4.25B","20.56","41.81%","5,929,749","52.11%","-13.89%"],
+["KNSA","Kiniksa Pharmaceuticals International, plc","4.01B","52.13","56.71%","516,991","46.46%","-12.93%"],
+["DAVE","Dave Inc.","3.88B","304.92","58.52%","685,309","24.49%","-4.31%"],
+["NP","Neptune Insurance Holdings Inc.","3.87B","28.01","38.08%","723,688","20.32%","-15.72%"],
+["INOD","Innodata Inc.","3.60B","110.21","40.10%","1,737,713","47.58%","-11.93%"],
+["CECO","CECO Environmental Corp.","3.40B","94.64","32.11%","1,048,885","50.97%","-6.52%"],
+["AAUC","Allied Gold Corporation","3.33B","26.73","52.99%","306,020","82.38%","-16.99%"],
+["PTRN","Pattern Group Inc.","3.32B","18.76","41.99%","1,487,524","26.56%","-12.38%"],
+["KYIV","Kyivstar Group Ltd.","3.23B","13.98","425.75%","500,485","19.87%","-15.17%"],
+["ARQT","Arcutis Biotherapeutics, Inc.","3.21B","25.66","95.30%","1,625,983","582.83%","-19.23%"],
+["CALY","Callaway Golf Company","3.07B","17.07","35.50%","2,543,391","18.19%","-5.22%"],
+["COHU","Cohu, Inc.","3.06B","64.89","23.10%","1,641,184","150.61%","-6.81%"],
+["AYA","Aya Gold & Silver Inc.","2.96B","21.04","320.72%","434,202","17.81%","-4.36%"],
+["PRVA","Privia Health Group, Inc.","2.94B","23.36","24.72%","876,298","15.24%","-11.88%"],
+["FA","First Advantage Corporation","2.81B","16.41","53.53%","1,496,490","16.63%","-11.54%"],
+["EROK","EagleRock Land, LLC","2.70B","20.77","307.73%","372,547","28.67%","-16.27%"],
+["PDFS","PDF Solutions, Inc.","2.63B","62.91","24.44%","754,252","25.51%","-6.08%"],
+["CUBI","Customers Bancorp, Inc.","2.59B","76.52","36.60%","290,827","12.95%","-7.32%"],
+["LCLN","Lincoln International, Inc.","2.44B","23.89","25.38%","932,651","38.43%","-5.59%"],
+["AXGN","Axogen, Inc.","2.33B","43.83","22.41%","1,030,788","49.07%","-4.37%"],
+["BRUN","Boost Run, Inc.","2.24B","36.50","238.84%","2,008,988","1,350.00%","-13.10%"],
+["CLBK","Columbia Financial, Inc.","2.11B","20.30","46.51%","386,853","5.41%","-4.22%"],
+["AUPH","Aurinia Pharmaceuticals Inc.","2.09B","16.26","20.62%","1,162,608","16.46%","-3.67%"],
+["SKWD","Skyward Specialty Insurance Group, Inc.","2.01B","49.50","28.85%","345,367","12.09%","-17.50%"]
+];
+
+// VICTOR: [ticker, name, mktcap, avgvol, w52_high_chg, eps_ty, eps_5y, rev_5y, eps_q, rev_q, ma200_chg]
+const DATA_VICTOR = [
+["SFD","Smithfield Foods, Inc.","9.70B","1,149,696","-17.33%","4.55%","47.54%","1.48%","8.77%","0.77%","2.46%"],
+["ONB","Old National Bancorp","9.56B","3,150,606","-5.46%","18.33%","2.05%","25.03%","34.09%","46.18%","8.28%"],
+["BRX","Brixmor Property Group Inc.","9.47B","2,500,981","-5.95%","22.22%","30.21%","5.74%","80.83%","5.13%","9.79%"],
+["HSIC","Henry Schein, Inc.","9.10B","1,360,619","-10.52%","7.60%","1.49%","4.74%","4.55%","6.31%","8.65%"],
+["MTCH","Match Group, Inc.","8.26B","2,713,867","-9.63%","17.60%","6.05%","6.96%","52.03%","3.94%","6.39%"],
+["CMC","Commercial Metals Company","8.08B","1,012,655","-14.19%","107.69%","15.53%","8.39%","277.27%","21.53%","8.33%"],
+["CBSH","Commerce Bancshares, Inc.","7.98B","1,212,579","-13.33%","2.87%","7.57%","6.28%","3.13%","17.34%","4.67%"],
+["ORA","Ormat Technologies, Inc.","7.89B","784,473","-12.30%","0.74%","8.11%","11.36%","7.58%","75.80%","12.58%"],
+["AXS","AXIS Capital Holdings Limited","7.44B","587,083","-8.48%","2.47%","49.93%","6.06%","45.58%","7.98%","0.95%"],
+["KEX","Kirby Corporation","7.44B","522,036","-11.82%","10.80%","40.55%","11.07%","12.78%","7.44%","17.12%"],
+["EAT","Brinker International, Inc.","7.03B","836,634","-12.41%","20.91%","130.23%","14.67%","12.11%","3.17%","15.70%"],
+["LEA","Lear Corporation","7.00B","675,640","-7.09%","15.70%","16.13%","5.56%","124.16%","4.72%","15.52%"],
+["ROAD","Construction Partners, Inc.","6.93B","590,772","-18.81%","37.90%","26.61%","32.04%","109.72%","34.56%","4.16%"],
+["TRNO","Terreno Realty Corporation","6.81B","844,788","-5.54%","23.44%","27.56%","20.57%","40.16%","12.70%","3.03%"],
+["RSI","Rush Street Interactive, Inc.","6.71B","2,100,876","-6.82%","62.41%","49.35%","28.46%","67.19%","41.14%","36.31%"],
+["URBN","Urban Outfitters, Inc.","6.56B","1,178,235","-9.21%","13.34%","21.70%","10.77%","12.07%","11.42%","6.07%"],
+["GNTX","Gentex Corporation","5.50B","2,100,000","-12.05%","10.12%","3.33%","8.91%","9.52%","17.11%","5.65%"],
+["NJR","New Jersey Resources Corporation","5.45B","563,901","-7.72%","6.05%","5.96%","2.19%","6.93%","2.89%","6.99%"],
+["TKC","Turkcell Iletisim Hizmetleri A.S.","5.44B","1,825,949","-14.97%","22.37%","32.47%","52.18%","15.14%","8.94%","0.61%"],
+["UGP","Ultrapar Participações S.A.","5.11B","3,112,575","-22.68%","84.22%","28.34%","14.31%","167.39%","10.27%","1.99%"],
+["FFIN","First Financial Bankshares, Inc.","4.68B","847,406","-15.20%","14.97%","3.35%","4.63%","16.41%","13.13%","2.17%"],
+["CSTM","Constellium SE","4.64B","1,982,554","-7.88%","104.18%","45.72%","9.71%","446.88%","24.36%","48.82%"],
+["TCBI","Texas Capital Bancshares, Inc.","4.35B","500,220","-8.58%","12.15%","21.33%","6.77%","69.57%","16.89%","5.84%"],
+["UCB","United Community Banks, Inc.","3.95B","894,340","-10.16%","8.95%","3.18%","10.21%","19.30%","14.38%","1.77%"],
+["HAFN","Hafnia Limited","3.60B","2,077,731","-24.59%","88.20%","42.30%","25.10%","184.15%","22.51%","4.48%"],
+["CGAU","Centerra Gold Inc.","3.48B","1,423,405","-21.73%","69.38%","10.84%","13.88%","190.32%","61.84%","11.75%"],
+["SHOO","Steven Madden, Ltd.","3.25B","966,181","-5.62%","24.80%","32.91%","16.95%","75.44%","17.99%","16.12%"],
+["ERO","Ero Copper Corp.","3.20B","1,216,696","-25.43%","87.02%","14.07%","19.52%","35.07%","110.39%","14.35%"],
+["INOD","Innodata Inc.","3.06B","1,712,235","-25.15%","49.57%","95.66%","36.56%","90.91%","54.42%","50.90%"],
+["TRMD","TORM plc","3.01B","771,184","-17.27%","169.27%","89.49%","17.57%","90.32%","22.15%","16.67%"],
+["DHT","DHT Holdings, Inc.","3.00B","2,876,438","-9.49%","199.42%","10.79%","3.10%","277.78%","78.13%","23.29%"],
+["PFS","Provident Financial Services, Inc.","2.97B","933,758","-5.00%","5.02%","5.56%","16.80%","24.18%","9.22%","8.70%"],
+["SBLK","Star Bulk Carriers Corp.","2.85B","1,373,938","-10.46%","287.75%","23.30%","8.32%","13118.10%","21.90%","15.85%"],
+["KMT","Kennametal Inc.","2.75B","1,230,264","-17.62%","192.11%","70.87%","4.62%","83.53%","21.83%","16.83%"],
+["PGNY","Progyny, Inc.","2.05B","1,471,055","-8.97%","8.93%","5.65%","27.36%","70.59%","1.38%","19.23%"]
+];
+
+// ONEILL: [ticker, name, mktcap, price, avgvol, w52_high_chg, eps_ty, eps_5y, eps_q, relvol]
+const DATA_ONEILL = [
+["TSM","Taiwan Semiconductor Manufacturing Company Limited","1.98T","459.87","12,199,886","-0.40%","48.45%","29.04%","58.38%","1.07"],
+["MU","Micron Technology, Inc.","1.29T","1,141.80","53,135,967","-0.36%","635.94%","49.86%","756.03%","0.75"],
+["CAT","Caterpillar Inc.","454.71B","987.23","2,681,920","-0.73%","29.02%","26.28%","30.24%","0.91"],
+["HWM","Howmet Aerospace Inc.","110.96B","277.33","2,362,847","-4.58%","33.84%","72.50%","71.43%","0.77"],
+["JCI","Johnson Controls International plc","88.44B","144.95","3,877,237","-2.97%","29.99%","31.27%","38.88%","0.76"],
+["WWD","Woodward, Inc.","25.85B","433.90","774,903","-2.58%","36.49%","21.31%","23.03%","0.75"],
+["FRO","Frontline plc","9.03B","40.54","3,482,632","-0.49%","305.48%","23.79%","1579.71%","1.10"],
+["MRX","Marex Group plc","4.63B","64.42","823,826","-1.04%","30.64%","71.90%","55.44%","1.08"],
+["DCOM","Dime Commercial Bancshares, Inc.","1.73B","39.20","253,569","-3.84%","30.12%","59.17%","65.86%","1.01"],
+["BWFG","Bankwell Financial Group, Inc.","433.07M","55.73","52,848","-2.19%","21.72%","30.98%","62.07%","2.35"]
+];
+
+// BANDERAS: [ticker, name, mktcap, price, volume, mast_gain_pct, mast_weeks, flag_pullback_pct, flag_weeks, mast_start, mast_end, flag_end]
+const DATA_BANDERAS = [
+["DDD","3D Systems Corporation",574141843,3.52,2994909,101.1,8,22.3,3,"2026-04-02","2026-06-01","2026-06-17"],
+["ALAB","Astera Labs, Inc.",71069159668,414.62,5948286,205.5,8,12.8,3,"2026-04-07","2026-06-03","2026-06-17"],
+["ROMA","Roma Green Finance Limited",496863825,8.34,68329,100.7,6.4,24,4.6,"2026-03-31","2026-05-15","2026-06-17"],
+["CEVA","CEVA, Inc.",1386003608,49.75,842283,152.7,8,17.2,3,"2026-04-06","2026-06-02","2026-06-17"],
+["HYLN","Hyliion Holdings Corp.",1428401192,8.01,5468717,322.9,7.2,13.1,3,"2026-04-07","2026-05-28","2026-06-17"],
+["UMC","United Microelectronics Corporation",57908018305,24.09,13985906,158.1,8,14.9,3,"2026-03-30","2026-05-27","2026-06-17"],
+["QMCO","Quantum Corporation",218838534,14.95,1095095,161.5,8,21.4,3,"2026-04-07","2026-06-03","2026-06-17"],
+["HIVE","HIVE Digital Technologies Ltd.",1071385647,4.26,42853585,154.9,8,21.5,3,"2026-03-30","2026-05-27","2026-06-17"],
+["MRVL","Marvell Technology, Inc.",271931580000,310.85,80004330,175.8,8,16.3,3,"2026-04-07","2026-06-03","2026-06-17"],
+["STRL","Sterling Infrastructure, Inc.",26368133413,859.29,468460,150.4,8,19.5,3,"2026-04-07","2026-06-03","2026-06-17"],
+["PENG","Penguin Solutions, Inc.",3407695162,67.15,2800008,248.5,8,17.2,3,"2026-04-06","2026-06-02","2026-06-17"],
+["HUT","Hut 8 Corp.",13936899183,123.78,2780191,164.8,8,14.9,3,"2026-03-31","2026-05-28","2026-06-17"],
+["SYNA","Synaptics Incorporated",5438254164,140.75,477730,114.8,8,16.8,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["TOYO","TOYO Co., Ltd.",444582804,12.11,399064,121.1,8,23.9,3,"2026-03-31","2026-05-28","2026-06-17"],
+["KZIA","Kazia Therapeutics Limited",154491674,13.52,188070,102.5,6.4,24.2,5,"2026-03-24","2026-05-08","2026-06-15"],
+["ACMR","ACM Research, Inc.",7607917876,110.09,1418154,136,8,17.8,3,"2026-03-31","2026-05-28","2026-06-17"],
+["OSS","One Stop Systems, Inc.",456492983,18.43,843798,148.2,8,17.1,3,"2026-04-02","2026-06-01","2026-06-17"],
+["HPE","Hewlett Packard Enterprise Company",62720899772,47.37,26036396,128.4,8,19,3,"2026-04-06","2026-06-02","2026-06-17"],
+["CMPS","COMPASS Pathways plc",1690914980,12.53,2867761,154.3,7.2,22.3,3,"2026-04-09","2026-06-01","2026-06-17"],
+["AEVA","Aeva Technologies, Inc.",1685453286,24.71,1483009,120.4,8,21.2,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["NBIS","Nebius Group N.V.",74072533936,289.3,16673201,143.1,8,20,3,"2026-04-02","2026-06-01","2026-06-17"],
+["RIOT","Riot Platforms, Inc.",10626049563,28.1,10715343,127.7,8,10.6,3,"2026-03-30","2026-05-27","2026-06-17"],
+["BTDR","Bitdeer Technologies Group",4369913208,17.96,6686828,112.5,8,12.4,3,"2026-03-31","2026-05-28","2026-06-17"],
+["AEHR","Aehr Test Systems, Inc.",3652351854,116.12,1005460,238,8,16,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["ON","ON Semiconductor Corporation",47718132536,121.76,8108098,117.7,8,13.3,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["BLZE","Backblaze, Inc.",489120058,8.15,758820,161.8,7.2,19,3,"2026-04-09","2026-06-01","2026-06-17"],
+["BE","Bloom Energy Corporation",93075722487,327.22,11429406,111.9,5.6,20.7,5,"2026-04-01","2026-05-12","2026-06-17"],
+["OUST","Ouster, Inc.",2963975776,46.55,4901708,166,8,13.2,3,"2026-03-30","2026-05-27","2026-06-17"],
+["KLC","KinderCare Learning Companies, Inc.",493846007,4.17,561277,127.7,8,14.6,5,"2026-03-16","2026-05-12","2026-06-17"],
+["KOPN","Kopin Corporation",872762418,4.95,4798701,168.9,8,24,3,"2026-03-31","2026-05-28","2026-06-17"],
+["COOK","Traeger, Inc.",196562483,70.66,60512,133.7,8,15.4,3,"2026-04-01","2026-05-29","2026-06-17"],
+["ASPN","Aspen Aerogels, Inc.",522956728,6.31,1274982,100.6,8,14.5,3,"2026-03-30","2026-05-27","2026-06-17"],
+["CODI","Compass Diversified",760635616,10.11,683931,114.5,7.2,20.5,5,"2026-03-20","2026-05-12","2026-06-17"],
+["WEST","Westrock Coffee Company",878997238,9.01,564826,126.7,6.4,14.2,4.2,"2026-03-25","2026-05-11","2026-06-10"],
+["NOK","Nokia Oyj",75864819249,13.58,111050288,106.3,8,18.6,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["SLS","SELLAS Life Sciences Group, Inc.",1501282872,8.07,11545841,124,7.2,20.3,3.8,"2026-03-30","2026-05-20","2026-06-17"],
+["ASYS","Amtech Systems, Inc.",383601176,21.94,230058,103,8,18.5,4.6,"2026-03-18","2026-05-14","2026-06-17"],
+["GFS","GLOBALFOUNDRIES Inc.",47004773072,85.71,1970929,109.5,8,16.8,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["ACLS","Axcelis Technologies, Inc.",5753385518,187.2,406588,102.5,6.4,16.2,5,"2026-03-20","2026-05-06","2026-06-11"],
+["TH","Target Hospitality Corp.",2016605687,20.25,1024120,105.1,8,13.7,4.6,"2026-03-19","2026-05-15","2026-06-17"],
+["FROG","JFrog Ltd.",10008122794,82.63,1815162,106,6.4,12,3,"2026-04-15","2026-06-01","2026-06-17"],
+["FLEX","Flex Ltd.",54407121566,148.5,7398395,135.5,8,12.5,3,"2026-04-06","2026-06-02","2026-06-17"],
+["CIFR","Cipher Digital Inc.",11927874585,29.16,35994354,109.4,8,16.5,3,"2026-03-30","2026-05-27","2026-06-17"],
+["QUIK","QuickLogic Corporation",387014300,21.84,346350,138.7,8,13.8,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["VICR","Vicor Corporation",15077417807,330.78,443196,117.6,8,18.6,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["ARM","Arm Holdings plc",469420615020,439.5,25643890,174.2,8,24.8,3,"2026-04-02","2026-06-01","2026-06-17"],
+["XMTR","Xometry, Inc.",5258010534,93.4,496103,140.5,6.4,10.4,4.6,"2026-03-30","2026-05-14","2026-06-17"],
+["AIP","Arteris, Inc.",2044495363,44.28,541694,148.9,6.4,10.8,3.8,"2026-03-30","2026-05-14","2026-06-11"],
+["MU","Micron Technology, Inc.",1284500361430,1139.01,43545034,182.7,8,16.6,3,"2026-04-02","2026-06-01","2026-06-17"],
+["FBYD","Falcon's Beyond Global, Inc.",1563935945,16.25,85428,116.1,8,22.6,3.8,"2026-03-24","2026-05-20","2026-06-17"],
+["INOD","Innodata Inc.",3118913243,95.51,1326997,219.5,7.2,14.4,3,"2026-04-09","2026-06-01","2026-06-17"],
+["APLD","Applied Digital Corporation",13305429736,46.56,12303928,127.4,6.4,21.6,4.6,"2026-03-30","2026-05-14","2026-06-17"],
+["AMD","Advanced Micro Devices, Inc.",879334006594,539.27,24873034,154.7,8,12.7,3,"2026-03-31","2026-05-28","2026-06-17"],
+["INTC","Intel Corporation",670418140000,133.39,162151120,174.9,7.2,23.4,5,"2026-03-20","2026-05-12","2026-06-17"],
+["TTMI","TTM Technologies, Inc.",22521509529,216.88,1595833,106.3,8,14.9,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["VSH","Vishay Intertechnology, Inc.",8800602774,64.66,9307217,233.1,8,12.5,3,"2026-04-06","2026-06-02","2026-06-17"],
+["DELL","Dell Technologies Inc.",266806616655,411.67,7831662,167.2,8,20.6,3,"2026-04-02","2026-06-01","2026-06-17"],
+["AMBQ","Ambiq Micro, Inc.",1893571168,88.59,897844,251.5,8,10.8,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["CLYM","Climb Bio, Inc.",655060383,11.44,885417,100,6.4,21,5,"2026-03-20","2026-05-06","2026-06-11"],
+["SIMO","Silicon Motion Technology Corporation",10970540936,323.54,1396316,163.8,8,13.3,3.4,"2026-03-27","2026-05-26","2026-06-17"],
+["WYFI","WhiteFiber, Inc.",1493984017,38.69,3517803,167.8,6.4,23.9,4.2,"2026-03-30","2026-05-14","2026-06-15"],
+["TGEN","Tecogen Inc.",180926635,6.05,133904,199.1,8,18.7,4.6,"2026-03-19","2026-05-15","2026-06-17"],
+["LGN","Legence Corp.",9250207738,85.62,584228,100,7.2,21.4,5,"2026-03-20","2026-05-12","2026-06-17"],
+["CDNL","Cardinal Infrastructure Group Inc.",1247831029,81.6,363557,105,8,19.1,4.2,"2026-03-13","2026-05-11","2026-06-10"],
+["SANM","Sanmina Corporation",12949748753,241.61,1428864,111.1,8,11.6,3,"2026-03-30","2026-05-27","2026-06-17"],
+["KEEL","Keel Infrastructure Corp.",3776948212,6.26,43826715,208.1,8,15.9,3,"2026-04-02","2026-06-01","2026-06-17"],
+["STM","STMicroelectronics N.V.",69253108562,78.42,12813688,124.4,8,11.1,3,"2026-04-06","2026-06-02","2026-06-17"]
+];
+
+// RSC MANSFIELD: [ticker, name, mktcap, price, volume, mansfield_rs, ch1m_pct]
+const DATA_RSC = [
+["QMMM","QMMM Holdings Limited",6830437235,119.4,773300,1312.3,2501.3],
+["RXT","Rackspace Technology, Inc.",1796894218,7.21,27242236,302.3,26.3],
+["SNDK","Sandisk Corporation",324069260124,2188.33,9643310,282.5,53.9],
+["HYLN","Hyliion Holdings Corp.",1446233916,8.11,5582629,207.8,73.6],
+["WDC","Western Digital Corporation",257212146616,746.23,16275567,199.2,56.4],
+["AGL","agilon health, inc.",1883098926,112.87,416987,191.9,34.3],
+["MU","Micron Technology, Inc.",1176440884663,1043.19,46149178,189.2,56.3],
+["MXL","MaxLinear, Inc.",7948994780,88.77,4383554,186.8,-4.2],
+["AXTI","AXT, Inc.",5387915985,84.43,12192640,183.3,-33.5],
+["STX","Seagate Technology Holdings plc",242098814205,1070.04,7913781,175.2,35.5],
+["AEHR","Aehr Test Systems, Inc.",3632850837,115.5,1377997,170.1,14.4],
+["VPG","Vishay Precision Group, Inc.",1877901685,141.19,447358,166.3,45.3],
+["VSH","Vishay Intertechnology, Inc.",8833268172,64.9,11347629,166.2,71.5],
+["OPTX","Syntec Optics Holdings, Inc.",492220109,12.22,948205,163.9,69],
+["DOCN","DigitalOcean Holdings, Inc.",18083181642,173.27,2664445,160.3,10.3]
+];
+
+// RSC MANSFIELD SP500+NASDAQ100: [ticker, name, mktcap, price, volume, mansfield_rs, ch1m_pct]
+const DATA_RSC2 = [
+["SNDK","Sandisk Corporation",290078217970,1958.8,9182544,282.5,46.9],
+["WDC","Western Digital Corporation",257212146616,712.13,16537378,199.2,55.3],
+["MU","Micron Technology, Inc.",1176440884663,1043.19,46149178,189.2,53.1],
+["STX","Seagate Technology Holdings plc",242141802107,1066.07,8152514,175.2,43.9],
+["MRVL","Marvell Technology, Inc.",271931580000,289.54,80004330,157.7,71.4],
+["DELL","Dell Technologies Inc.",265400222315,419.32,15213555,137.3,76.2],
+["ARM","Arm Holdings plc",469377891870,418.88,34122455,137.2,94.7],
+["INTC","Intel Corporation",608648600000,121.1,115324920,134.6,12],
+["AMD","Advanced Micro Devices, Inc.",875094410690,512.48,43585543,99.2,21.7],
+["LITE","Lumentum Holdings Inc.",66130000000,869.98,8313465,91.4,-1.7],
+["AMAT","Applied Materials, Inc.",489960303847,592.92,16601741,90.1,43.4],
+["LRCX","Lam Research Corporation",486522141840,374.18,21354149,86.2,34.6],
+["COHR","Coherent Corp.",76215210282,378.85,7469125,79.4,4.4],
+["HPE","Hewlett Packard Enterprise Company",62780488931,48.2,52385970,77,46.1],
+["TER","Teradyne, Inc.",68552943583,408.56,13652928,71.8,27.3]
+];
+
+/* ============ HELPERS ============ */
+function parseMktCap(s) {
+  if (typeof s === 'number') return s;
+  const m = String(s).match(/([\d,.]+)([BTM])/);
+  if (!m) return 0;
+  const n = parseFloat(m[1].replace(/,/g,''));
+  return m[2]==='T'?n*1e12:m[2]==='B'?n*1e9:n*1e6;
+}
+function fmtMktCap(n) {
+  n = parseMktCap(n);
+  if (n >= 1e12) return (n/1e12).toFixed(2)+'T';
+  if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
+  return n.toString();
+}
+function parsePct(s) { return parseFloat(String(s).replace(/[%,]/g,''))||0; }
+function parseVol(s) { return parseInt(String(s).replace(/,/g,''))||0; }
+function parseNum(s) { return parseFloat(String(s).replace(/,/g,''))||0; }
+function fmtPct(val) {
+  const abs = Math.abs(val);
+  if (abs >= 1000) return (val/1000).toFixed(1)+'k%';
+  return val.toFixed(2)+'%';
+}
+function fmtVol(s) {
+  const v = parseVol(s);
+  if (v>=1e6) return (v/1e6).toFixed(1)+'M';
+  if (v>=1e3) return Math.round(v/1e3)+'K';
+  return v.toString();
+}
+function distClass(pct, greenT, orangeT) {
+  if (pct > greenT) return 'dist-green';
+  if (pct > orangeT) return 'dist-orange';
+  return 'dist-red';
+}
+function escapeHtml(s) { return String(s).replace(/"/g,'&quot;'); }
+function logoBox(ticker) {
+  return `<div class="logo-box">
+        <img src="https://financialmodelingprep.com/image-stock/${ticker}.png"
+             onerror="this.style.display='none';this.parentNode.innerHTML='<div class=&quot;logo-fallback&quot;>${ticker}</div>'"
+             alt="${ticker}">
+      </div>`;
+}
+function tickerSpan(ticker) {
+  return `<span class="ticker" onclick="event.stopPropagation();openChart('${ticker}')">${ticker}</span>`;
+}
+
+/* ============ SCREENER CONFIGS ============ */
+const SCREENERS = {
+  crecimiento: {
+    title: 'Screener · Crecimiento US',
+    data: DATA_CRECIMIENTO,
+    chips: ['Market Cap &gt; $2 B','Precio &gt; $9','Sin dividendo','Ventas YoY &gt; 20%','Vol. medio &gt; 200 K','EPS prox. año &gt; 0%','A &lt; 20% de máx. 52 sem.'],
+    note: '',
+    counterLabel: 'valores cumplen los 7 filtros',
+    sortOptions: [
+      ['mktcap_desc','Market Cap (desc)'],
+      ['revgrowth_desc','Ventas YoY (desc)'],
+      ['eps_desc','EPS prox. año (desc)'],
+      ['vol_desc','Volumen medio (desc)'],
+      ['near_high','Más cerca de máx. histórico'],
+      ['price_desc','Precio (desc)'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) {
+        case 'mktcap_desc':    return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'revgrowth_desc': return parsePct(b[4])-parsePct(a[4]);
+        case 'eps_desc':       return parsePct(b[6])-parsePct(a[6]);
+        case 'vol_desc':       return parseVol(b[5])-parseVol(a[5]);
+        case 'near_high':      return parsePct(b[7])-parsePct(a[7]);
+        case 'price_desc':     return parseNum(b[3])-parseNum(a[3]);
+        case 'ticker_az':      return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, price, revgrowth, avgvol, eps, w52] = d;
+      const w52val = parsePct(w52);
+      const dclass = distClass(w52val, -5, -12);
+      const revVal = parsePct(revgrowth);
+      const epsVal = parsePct(eps);
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge ${dclass}">${w52val.toFixed(1)}% máx.</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${price}</span>
+      <span class="mktcap">${mktcap}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-green"><div class="stat-label">Ventas YoY</div><div class="stat-value">${fmtPct(revVal)}</div></div>
+      <div class="stat stat-purple"><div class="stat-label">EPS prox.</div><div class="stat-value">${fmtPct(epsVal)}</div></div>
+      <div class="stat stat-blue"><div class="stat-label">Vol. medio</div><div class="stat-value">${fmtVol(avgvol)}</div></div>
+    </div>
+  </div>`;
+    }
+  },
+
+  victor: {
+    title: 'Acciones Top · Crecimiento + Calidad',
+    data: DATA_VICTOR,
+    chips: ['Market Cap $2B–$10B','País: USA','Vol. medio &gt; 500K','&lt; -5% del máx. 52 sem.','EPS este año &gt; 0%','EPS 5 años &gt; 0%','Ventas 5 años &gt; 0%','EPS trim. &gt; 0%','Ventas trim. &gt; 0%','Precio &gt; media 200 días'],
+    chipWarn: 'Inst. Ownership &gt; 70% (no disponible)',
+    note: 'Nota: stockanalysis.com no ofrece un filtro equivalente a "Institutional Ownership" de Finviz, por lo que este criterio no pudo aplicarse. Los 10 filtros restantes sí están aplicados con datos en tiempo real.',
+    counterLabel: 'valores cumplen los filtros aplicados',
+    sortOptions: [
+      ['mktcap_desc','Market Cap (desc)'],
+      ['vol_desc','Volumen medio (desc)'],
+      ['eps_ty_desc','EPS este año (desc)'],
+      ['eps5y_desc','EPS 5 años (desc)'],
+      ['rev5y_desc','Ventas 5 años (desc)'],
+      ['epsq_desc','EPS trimestral (desc)'],
+      ['revq_desc','Ventas trimestral (desc)'],
+      ['ma200_desc','% sobre media 200d (desc)'],
+      ['near_high','Más cerca de máx. histórico'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) {
+        case 'mktcap_desc': return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'vol_desc':    return parseVol(b[3])-parseVol(a[3]);
+        case 'eps_ty_desc': return parsePct(b[5])-parsePct(a[5]);
+        case 'eps5y_desc':  return parsePct(b[6])-parsePct(a[6]);
+        case 'rev5y_desc':  return parsePct(b[7])-parsePct(a[7]);
+        case 'epsq_desc':   return parsePct(b[8])-parsePct(a[8]);
+        case 'revq_desc':   return parsePct(b[9])-parsePct(a[9]);
+        case 'ma200_desc':  return parsePct(b[10])-parsePct(a[10]);
+        case 'near_high':   return parsePct(b[4])-parsePct(a[4]);
+        case 'ticker_az':   return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, avgvol, w52, epsTy, eps5y, rev5y, epsQ, revQ, ma200] = d;
+      const w52val = parsePct(w52);
+      const dclass = distClass(w52val, -5, -15);
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge ${dclass}">${w52val.toFixed(1)}% máx.</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="mktcap">Market Cap: <strong>${mktcap}</strong></span>
+      <span class="mktcap">Vol: ${fmtVol(avgvol)}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-green"><div class="stat-label">EPS este año</div><div class="stat-value">${fmtPct(parsePct(epsTy))}</div></div>
+      <div class="stat stat-green"><div class="stat-label">EPS 5 años</div><div class="stat-value">${fmtPct(parsePct(eps5y))}</div></div>
+      <div class="stat stat-purple"><div class="stat-label">Ventas 5 años</div><div class="stat-value">${fmtPct(parsePct(rev5y))}</div></div>
+      <div class="stat stat-blue"><div class="stat-label">EPS trim.</div><div class="stat-value">${fmtPct(parsePct(epsQ))}</div></div>
+      <div class="stat stat-blue"><div class="stat-label">Ventas trim.</div><div class="stat-value">${fmtPct(parsePct(revQ))}</div></div>
+      <div class="stat stat-orange"><div class="stat-label">% sobre MA200</div><div class="stat-value">${fmtPct(parsePct(ma200))}</div></div>
+    </div>
+  </div>`;
+    }
+  },
+
+  oneill: {
+    title: 'Screener Oneill · Momentum + Calidad',
+    data: DATA_ONEILL,
+    chips: ['EPS este año &gt; 20%','EPS 5 años &gt; 20%','EPS trim. &gt; 20%','A 0-5% del máx. 52 sem.','Vol. medio &gt; 50K','Vol. relativo &gt; 0.75'],
+    chipWarn: 'Inst. Ownership &gt; 20% (no disponible)',
+    note: 'Nota: stockanalysis.com no ofrece un filtro equivalente a "Institutional Ownership" de Finviz, por lo que este criterio no pudo aplicarse. Los 6 filtros restantes sí están aplicados con datos en tiempo real.',
+    counterLabel: 'valores cumplen los filtros aplicados',
+    sortOptions: [
+      ['mktcap_desc','Market Cap (desc)'],
+      ['vol_desc','Volumen medio (desc)'],
+      ['eps_ty_desc','EPS este año (desc)'],
+      ['eps5y_desc','EPS 5 años (desc)'],
+      ['epsq_desc','EPS trimestral (desc)'],
+      ['relvol_desc','Vol. relativo (desc)'],
+      ['near_high','Más cerca de máx. histórico'],
+      ['price_desc','Precio (desc)'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) {
+        case 'mktcap_desc': return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'vol_desc':    return parseVol(b[4])-parseVol(a[4]);
+        case 'eps_ty_desc': return parsePct(b[6])-parsePct(a[6]);
+        case 'eps5y_desc':  return parsePct(b[7])-parsePct(a[7]);
+        case 'epsq_desc':   return parsePct(b[8])-parsePct(a[8]);
+        case 'relvol_desc': return parseNum(b[9])-parseNum(a[9]);
+        case 'near_high':   return parsePct(b[5])-parsePct(a[5]);
+        case 'price_desc':  return parseNum(b[3])-parseNum(a[3]);
+        case 'ticker_az':   return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, price, avgvol, w52, epsTy, eps5y, epsQ, relvol] = d;
+      const w52val = parsePct(w52);
+      const dclass = distClass(w52val, -2, -5);
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge ${dclass}">${w52val.toFixed(1)}% máx.</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${price}</span>
+      <span class="mktcap">${mktcap}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-green"><div class="stat-label">EPS este año</div><div class="stat-value">${fmtPct(parsePct(epsTy))}</div></div>
+      <div class="stat stat-green"><div class="stat-label">EPS 5 años</div><div class="stat-value">${fmtPct(parsePct(eps5y))}</div></div>
+      <div class="stat stat-blue"><div class="stat-label">EPS trim.</div><div class="stat-value">${fmtPct(parsePct(epsQ))}</div></div>
+      <div class="stat stat-orange"><div class="stat-label">Vol. relativo</div><div class="stat-value">${parseNum(relvol).toFixed(2)}x</div></div>
+    </div>
+  </div>`;
+    }
+  },
+
+  banderas: {
+    title: 'Banderas · Patrón Mástil + Bandera',
+    data: DATA_BANDERAS,
+    chips: ['Mástil: +100% o más en 4-8 semanas','Bandera: consolidación 10-25% en 3-5 semanas','Patrón activo en los últimos ~6 días de cotización','Market Cap mínimo $150M'],
+    note: 'Metodología: se escaneó el histórico diario completo (desde IPO) de las ~5.588 acciones US del universo de stockanalysis.com. Primero se aplicó un filtro de momentum (subida de 3 ó 6 meses ≥ 55-80% y volumen ≥ 50K) para reducir a ~400 candidatos, y sobre estos se ejecutó un algoritmo de detección de mástil (ganancia ≥100% en 4-8 semanas) seguido de bandera (retroceso 10-25% en 3-5 semanas) que debe estar activo en las últimas sesiones. Resultado: 67 valores. Esto es un patrón técnico/gráfico, no un filtro fundamental — revisa siempre el gráfico antes de operar.',
+    counterLabel: 'valores con patrón mástil+bandera activo',
+    sortOptions: [
+      ['mast_desc','Ganancia del mástil (desc)'],
+      ['pullback_asc','Retroceso de bandera (asc)'],
+      ['mktcap_desc','Market Cap (desc)'],
+      ['vol_desc','Volumen (desc)'],
+      ['price_desc','Precio (desc)'],
+      ['flagend_desc','Fin de bandera (más reciente)'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) {
+        case 'mast_desc':     return b[5]-a[5];
+        case 'pullback_asc':  return a[7]-b[7];
+        case 'mktcap_desc':   return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'vol_desc':      return parseNum(b[4])-parseNum(a[4]);
+        case 'price_desc':    return parseNum(b[3])-parseNum(a[3]);
+        case 'flagend_desc':  return new Date(b[11])-new Date(a[11]);
+        case 'ticker_az':     return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, price, volume, mastGain, mastWeeks, pullback, flagWeeks, mastStart, mastEnd, flagEnd] = d;
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge dist-orange">bandera hasta ${flagEnd}</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${price}</span>
+      <span class="mktcap">${fmtMktCap(mktcap)}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-green"><div class="stat-label">Mástil</div><div class="stat-value">+${mastGain.toFixed(1)}%</div></div>
+      <div class="stat stat-blue"><div class="stat-label">Duración mástil</div><div class="stat-value">${mastWeeks} sem.</div></div>
+      <div class="stat stat-purple"><div class="stat-label">Retroceso bandera</div><div class="stat-value">-${pullback.toFixed(1)}%</div></div>
+      <div class="stat stat-orange"><div class="stat-label">Duración bandera</div><div class="stat-value">${flagWeeks} sem.</div></div>
+      <div class="stat stat-blue" style="grid-column: span 3;"><div class="stat-label">Mástil: ${mastStart} → ${mastEnd}</div><div class="stat-value" style="font-size:11px;">Volumen: ${fmtVol(volume)}</div></div>
+    </div>
+  </div>`;
+    }
+  },
+
+  rsc: {
+    title: 'RSC Mansfield · Top 15 vs S&P 500 (1 año)',
+    data: DATA_RSC,
+    chips: ['Fuerza relativa Mansfield vs SPY (proxy S&amp;P 500)','Ventana: 1 año (252 sesiones)','Universo: Market Cap &gt; $300M y Vol. medio &gt; 100K','Ranking: Top 15 por RSC Mansfield'],
+    note: 'Metodología: para cada acción del universo filtrado (~3.227 candidatas tras el filtro de liquidez, sobre un universo total de ~5.588), se calculó el ratio diario Precio Acción / Precio SPY durante el último año, su media móvil de 252 sesiones (≈52 semanas), y el RS de Mansfield = ((ratio de hoy / media móvil) - 1) × 100. Un valor positivo indica que la acción está más fuerte que el S&P 500 respecto a su propia tendencia relativa de 1 año. El ranking muestra las 15 acciones con mayor RSC Mansfield, junto a su variación mensual de precio (puede ser independiente del RSC: una acción puede tener RSC alto y haber caído el último mes si venía de una subida aún mayor).',
+    counterLabel: 'mejores acciones por RSC Mansfield',
+    sortOptions: [
+      ['rsc_desc','RSC Mansfield (desc)'],
+      ['ch1m_desc','Variación mensual (desc)'],
+      ['mktcap_desc','Market Cap (desc)'],
+      ['price_desc','Precio (desc)'],
+      ['vol_desc','Volumen (desc)'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) {
+        case 'rsc_desc':    return b[5]-a[5];
+        case 'ch1m_desc':   return b[6]-a[6];
+        case 'mktcap_desc': return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'price_desc':  return parseNum(b[3])-parseNum(a[3]);
+        case 'vol_desc':    return parseNum(b[4])-parseNum(a[4]);
+        case 'ticker_az':   return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, price, volume, rsc, ch1m] = d;
+      const ch1mClass = ch1m >= 0 ? 'dist-green' : 'dist-red';
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge ${ch1mClass}">${ch1m>=0?'+':''}${ch1m.toFixed(1)}% mes</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${price}</span>
+      <span class="mktcap">${fmtMktCap(mktcap)}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-purple"><div class="stat-label">RSC Mansfield</div><div class="stat-value">${rsc>=0?'+':''}${rsc.toFixed(1)}</div></div>
+      <div class="stat stat-green"><div class="stat-label">Variación mensual</div><div class="stat-value">${ch1m>=0?'+':''}${ch1m.toFixed(1)}%</div></div>
+      <div class="stat stat-blue"><div class="stat-label">Volumen</div><div class="stat-value">${fmtVol(volume)}</div></div>
+    </div>
+  </div>`;
+    }
+  },
+
+  rsc2: {
+    title: 'RSC Mansfield · Top 15 S&P 500 + Nasdaq 100',
+    data: DATA_RSC2,
+    chips: ['Fuerza relativa Mansfield vs SPY (proxy S&amp;P 500)','Ventana: 1 año (252 sesiones)','Universo: 517 tickers únicos (S&amp;P 500 + Nasdaq 100)','Ranking: Top 15 por RSC Mansfield'],
+    note: 'Metodología: igual que el screener RSC Mansfield general, pero el ranking se calcula solo sobre los 517 tickers únicos que componen el S&amp;P 500 (503 acciones) y el Nasdaq 100 (101 acciones, con solapamiento). Para cada acción se calculó el ratio diario Precio Acción / Precio SPY durante el último año, su media móvil de 252 sesiones (≈52 semanas), y el RS de Mansfield = ((ratio de hoy / media móvil) - 1) × 100. El ranking muestra las 15 acciones de grandes índices con mayor RSC Mansfield, junto a su variación mensual de precio.',
+    counterLabel: 'mejores acciones por RSC Mansfield (S&amp;P 500 + Nasdaq 100)',
+    sortOptions: [
+      ['rsc_desc','RSC Mansfield (desc)'],
+      ['ch1m_desc','Variación mensual (desc)'],
+      ['mktcap_desc','Market Cap (desc)'],
+      ['price_desc','Precio (desc)'],
+      ['vol_desc','Volumen (desc)'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) {
+        case 'rsc_desc':    return b[5]-a[5];
+        case 'ch1m_desc':   return b[6]-a[6];
+        case 'mktcap_desc': return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'price_desc':  return parseNum(b[3])-parseNum(a[3]);
+        case 'vol_desc':    return parseNum(b[4])-parseNum(a[4]);
+        case 'ticker_az':   return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, price, volume, rsc, ch1m] = d;
+      const ch1mClass = ch1m >= 0 ? 'dist-green' : 'dist-red';
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge ${ch1mClass}">${ch1m>=0?'+':''}${ch1m.toFixed(1)}% mes</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${price}</span>
+      <span class="mktcap">${fmtMktCap(mktcap)}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-purple"><div class="stat-label">RSC Mansfield</div><div class="stat-value">${rsc>=0?'+':''}${rsc.toFixed(1)}</div></div>
+      <div class="stat stat-green"><div class="stat-label">Variación mensual</div><div class="stat-value">${ch1m>=0?'+':''}${ch1m.toFixed(1)}%</div></div>
+      <div class="stat stat-blue"><div class="stat-label">Volumen</div><div class="stat-value">${fmtVol(volume)}</div></div>
+    </div>
+  </div>`;
+    }
+  }
+};
+
+/* ============ STATE / RENDERING ============ */
+let currentKey = 'crecimiento';
+
+function buildSortSelect(cfg) {
+  const sel = document.getElementById('sortSelect');
+  sel.innerHTML = cfg.sortOptions.map(o => `<option value="${o[0]}">${o[1]}</option>`).join('');
+}
+
+function buildChips(cfg) {
+  const area = document.getElementById('chipsArea');
+  let html = cfg.chips.map(c => `<span class="chip">${c}</span>`).join('');
+  if (cfg.chipWarn) html += `<span class="chip chip-warn">${cfg.chipWarn}</span>`;
+  area.innerHTML = html;
+  document.getElementById('noteArea').innerHTML = cfg.note || '';
+  document.getElementById('noteArea').style.display = cfg.note ? 'block' : 'none';
+  document.getElementById('counterLabel').textContent = cfg.counterLabel;
+}
+
+function applyFilters() {
+  const cfg = SCREENERS[currentKey];
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const sort = document.getElementById('sortSelect').value;
+  let filtered = cfg.data.filter(d =>
+    !q || d[0].toLowerCase().includes(q) || d[1].toLowerCase().includes(q)
+  );
+  filtered.sort((a,b) => cfg.sortFn(a,b,sort));
+  const grid = document.getElementById('stockGrid');
+  grid.innerHTML = filtered.length
+    ? filtered.map(cfg.renderCard).join('')
+    : '<div class="no-results">No hay resultados para tu búsqueda.</div>';
+  document.getElementById('showingText').textContent = `Mostrando ${filtered.length} de ${cfg.data.length}`;
+  document.getElementById('matchCount').textContent = filtered.length;
+}
+
+function switchScreener() {
+  currentKey = document.getElementById('screenerSelect').value;
+  const cfg = SCREENERS[currentKey];
+  document.getElementById('searchInput').value = '';
+  buildChips(cfg);
+  buildSortSelect(cfg);
+  applyFilters();
+}
+
+/* ============ TRADINGVIEW MODAL ============ */
+let tvWidget = null;
+function openChart(ticker) {
+  document.getElementById('modalTitle').textContent = ticker;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('tv_chart_container').innerHTML = '';
+  tvWidget = new TradingView.widget({
+    container_id: 'tv_chart_container',
+    symbol: ticker,
+    autosize: true,
+    interval: 'D',
+    timezone: 'Etc/UTC',
+    theme: 'dark',
+    style: '1',
+    locale: 'es',
+    toolbar_bg: '#232F3E',
+    enable_publishing: false,
+    allow_symbol_change: true,
+    hide_side_toolbar: false
+  });
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('tv_chart_container').innerHTML = '';
+}
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ============ INIT ============ */
+const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+document.getElementById('fecha').textContent = hoy;
+document.getElementById('footerDate').textContent = hoy;
+buildChips(SCREENERS[currentKey]);
+buildSortSelect(SCREENERS[currentKey]);
+applyFilters();
+</script>
+</body>
+</html>
