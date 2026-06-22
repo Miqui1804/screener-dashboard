@@ -292,6 +292,7 @@
       <option value="banderas">Banderas · Patrón Mástil + Bandera (técnico)</option>
       <option value="rsc">RSC Mansfield · Top 15 vs S&amp;P 500 (1 año)</option>
       <option value="rsc2">RSC Mansfield · Top 15 S&amp;P 500 + Nasdaq 100</option>
+      <option value="coincidencias">Coincidencias · En 3+ screeners</option>
     </select>
   </div>
 
@@ -350,6 +351,7 @@ const DATA_RSC = [["SNDK","Sandisk Corporation",336716125457,2273.73,9923461,324
 
 // RSC MANSFIELD SP500+NASDAQ100: [ticker, name, mktcap, price, volume, mansfield_rs, ch1m_pct]
 const DATA_RSC2 = [["SNDK","Sandisk Corporation",336716125457,2273.73,9923461,324.649,47.43],["MU","Micron Technology, Inc.",1349491674789,1196.64,39827842,225.48,58.953],["WDC","Western Digital Corporation",252521022813,732.62,13129498,198.095,50.602],["STX","Seagate Technology Holdings plc",247528864989,1094.04,6871167,174.694,34.99],["MRVL","Marvell Technology, Inc.",269315928000,307.86,49025983,168.194,61.445],["INTC","Intel Corporation",708364440000,140.94,126445493,166.134,18.937],["DELL","Dell Technologies Inc.",270546296028,418.71,7328953,132.749,65.629],["ARM","Arm Holdings plc",435477072027,407.72,9376066,127.356,36.713],["AMD","Advanced Micro Devices, Inc.",899488230492,551.63,25899464,110.274,22.696],["AMAT","Applied Materials, Inc.",508276947897,640.18,10633613,101.721,49.799],["LRCX","Lam Research Corporation",512158847340,409.54,14629183,99.963,35.502],["COHR","Coherent Corp.",83240618299,425.48,8866112,97.493,12.561],["LITE","Lumentum Holdings Inc.",69547754000,893.93,6882064,91.921,-7.317],["TER","Teradyne, Inc.",71539768034,457,4327441,88.351,29.301],["KLAC","KLA Corporation",351597035524,269.16,11711335,84.189,46.11]];
+const DATA_COINCIDENCIAS = [["BE","Bloom Energy Corporation",3,"Crecimiento, Banderas, RSC"],["MXL","MaxLinear, Inc.",3,"Crecimiento, Banderas, RSC"],["SNDK","Sandisk Corporation",3,"Crecimiento, RSC, RSC2"],["STX","Seagate Technology Holdings plc",3,"Oneill, RSC, RSC2"]];
 
 /* ============ HELPERS ============ */
 function parseMktCap(s) {
@@ -739,6 +741,41 @@ const SCREENERS = {
     </div>
   </div>`;
     }
+  },
+  coincidencias: {
+    title: 'Screener · Coincidencias (3+ listas)',
+    data: DATA_COINCIDENCIAS,
+    chips: ['Aparece en 3 o más de los 6 screeners', 'Cruce: Crecimiento, Acciones Top, Oneill, Banderas, RSC, RSC2'],
+    note: 'Este screener no aplica filtros propios: cruza los resultados de los otros 6 screeners y muestra los tickers que coinciden en al menos 3 de ellos, junto con el listado de en qué screeners aparecen.',
+    counterLabel: 'valores coinciden en 3 o más screeners',
+    sortOptions: [
+      ['count_desc', 'Nº de coincidencias (desc)'],
+      ['ticker_az', 'Ticker (A-Z)']
+    ],
+    sortFn: function(a, b, sort) {
+      switch (sort) {
+        case 'count_desc': return b[2] - a[2];
+        case 'ticker_az':  return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, count, screenersStr] = d;
+      const tags = screenersStr.split(', ').map(s => `<span class="chip">${s}</span>`).join('');
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge dist-green">${count}/6 screeners</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row" style="flex-wrap:wrap;gap:6px;">${tags}</div>
+  </div>`;
+    }
   }
 };
 
@@ -803,7 +840,12 @@ function openChart(ticker) {
     toolbar_bg: '#232F3E',
     enable_publishing: false,
     allow_symbol_change: true,
-    hide_side_toolbar: false
+    hide_side_toolbar: false,
+    studies: [
+      { id: "MAExp@tv-basicstudies", inputs: { length: 10 } },
+      { id: "MAExp@tv-basicstudies", inputs: { length: 21 } },
+      { id: "MASimple@tv-basicstudies", inputs: { length: 50 } }
+    ]
   });
 }
 function closeModal() {
