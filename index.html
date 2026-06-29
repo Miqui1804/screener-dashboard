@@ -289,7 +289,7 @@
       <option value="crecimiento">Crecimiento · 7 filtros de calidad/crecimiento</option>
       <option value="victor">Acciones Top · Crecimiento + Calidad (10 filtros)</option>
       <option value="oneill">Oneill · Momentum + Calidad (6 filtros)</option>
-      <option value="banderas">Banderas · Patrón Mástil + Bandera (técnico)</option>
+      <option value="banderas" selected>Banderas · Patrón Mástil + Bandera (técnico)</option>
       <option value="rsc">RSC Mansfield · Top 15 vs S&amp;P 500 (1 año)</option>
       <option value="rsc2">RSC Mansfield · Top 15 S&amp;P 500 + Nasdaq 100</option>
       <option value="coincidencias">Coincidencias · En 3+ screeners</option>
@@ -777,7 +777,7 @@ const SCREENERS = {
 };
 
 /* ============ STATE / RENDERING ============ */
-let currentKey = 'crecimiento';
+let currentKey = 'banderas';
 
 function buildSortSelect(cfg) {
   const sel = document.getElementById('sortSelect');
