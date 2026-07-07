@@ -214,6 +214,7 @@
       <option value="victor">Acciones Top · Crecimiento + Calidad (10 filtros)</option>
       <option value="oneill">Oneill · Momentum + Calidad (6 filtros)</option>
       <option value="banderas" selected>Banderas · Patrón Mástil + Bandera (técnico)</option>
+      <option value="taza">Taza con Asa · Patrón Cup &amp; Handle (técnico)</option>
       <option value="rsc">RSC Mansfield · Top 15 vs S&amp;P 500 (1 año)</option>
       <option value="rsc2">RSC Mansfield · Top 15 S&amp;P 500 + Nasdaq 100</option>
       <option value="coincidencias">Coincidencias · En 3+ screeners</option>
@@ -275,7 +276,9 @@ const DATA_RSC = [["SLS","SELLAS Life Sciences Group, Inc.",2786767959,14.98,106
 
 // RSC MANSFIELD SP500+NASDAQ100: [ticker, name, mktcap, price, volume, mansfield_rs, ch1m_pct]
 const DATA_RSC2 = [["SNDK","Sandisk Corporation",258416627710,1745,11954826,191.874,-0.93],["MU","Micron Technology, Inc.",1101790782390,975.56,59000750,142.383,-5.79],["INTC","Intel Corporation",604879100000,120.35,131868887,113.526,10.08],["DELL","Dell Technologies Inc.",254786882209,394.32,8684774,109.243,-15.37],["WDC","Western Digital Corporation",185783668609,539,10679313,104.819,-1.32],["MRVL","Marvell Technology, Inc.",214579692000,245.29,64055140,102.635,11.79],["STX","Seagate Technology Holdings plc",185562935459,820.16,4807602,94.052,-10.97],["MRNA","Moderna, Inc.",31647672018,79.76,9233455,89.716,73.17],["AMD","Advanced Micro Devices, Inc.",844357622887,517.82,32046916,88.365,1.51],["AMAT","Applied Materials, Inc.",478789294667,603.04,13113503,82.046,31.62],["ARM","Arm Holdings plc",336743871453,315.28,11320139,69.955,-22.89],["LRCX","Lam Research Corporation",439463155110,351.41,14641998,64.482,10.81],["GLW","Corning Incorporated",169364917582,196.79,17526614,60.099,11.37],["PANW","Palo Alto Networks, Inc.",283668900000,348.06,7648650,59.475,15.84],["DDOG","Datadog, Inc.",92677794808,260.36,4998034,56.118,-6.17]];
-const DATA_COINCIDENCIAS = [["HALO","Halozyme Therapeutics, Inc.",3,"Crecimiento, Acciones Top, Oneill"],["SNDK","Sandisk Corporation",3,"Crecimiento, RSC, RSC2"]];
+// TAZA: [ticker, name, mktcap, price, volume, cup_depth_pct, cup_weeks, handle_depth_pct, handle_weeks, buy_point, dist_to_buy_pct, cup_start, handle_start, last_date]
+const DATA_TAZA = [["CPAY","Corpay, Inc.",23504799692,359.61,751521,20.2,15,10.5,5,364.13,-2.1,"2026-02-10","2026-06-01","2026-07-06"],["CNH","CNH Industrial N.V.",12858287069,10.37,10629813,14.5,11,5.9,1,11.39,-4.6,"2026-04-09","2026-06-29","2026-07-06"],["ELVN","Enliven Therapeutics, Inc.",3617529060,51.81,2467063,30.1,10,4.1,1,50.85,-1.7,"2026-04-17","2026-06-29","2026-07-06"],["WDFC","WD-40 Company",3360755758,249.77,167938,19.5,17,2.8,1,248.33,-0.8,"2026-02-25","2026-06-26","2026-07-06"],["ENR","Energizer Holdings, Inc.",1417401140,20.7,971564,29.7,19,5.7,1,22.64,-5.7,"2026-02-06","2026-06-26","2026-07-06"],["IMMX","Immix Biopharma, Inc.",832210527,11.69,2162561,24,10,6.3,1,10.49,-0.4,"2026-04-17","2026-06-29","2026-07-06"],["KRNT","Kornit Digital Ltd.",714106751,15.41,186489,20,18,8.3,2,16.91,-8.3,"2026-02-11","2026-06-22","2026-07-06"],["FTW","Presidio Production Company",352533354,12.02,100095,27.1,12,5.2,4,12.62,-4.6,"2026-03-06","2026-06-04","2026-07-06"]];
+const DATA_COINCIDENCIAS = [];
 
 /* ============ HELPERS ============ */
 function parseMktCap(s) {
@@ -560,6 +563,59 @@ const SCREENERS = {
     }
   },
 
+  taza: {
+    title: 'Taza con Asa · Patrón Cup & Handle',
+    data: DATA_TAZA,
+    chips: ['Taza: corrección 12-35% en forma de U (6-40 semanas)','Bordes a nivel similar (±10%) con subida previa ≥ 25%','Asa: retroceso 2-15% en la mitad superior (1-5 semanas)','Precio aún bajo el pivot de compra','Market Cap mínimo $150M'],
+    note: 'Metodología: sobre ~800 candidatos US con volumen medio ≥ 100K y precio cerca de su máximo de 52 semanas, se escaneó el histórico diario ajustado de 2 años buscando: subida previa ≥ 25%, taza en U con profundidad 12-35% y fondo centrado (20-80% de la taza), recuperación hasta ±10% del borde izquierdo, y asa en formación con retroceso 2-15% en la mitad superior de la taza. El pivot de compra es el máximo del borde derecho (inicio del asa); la distancia indica cuánto le falta al último cierre ajustado para romperlo. Patrón técnico — revisa siempre el gráfico y el volumen antes de operar.',
+    counterLabel: 'valores con patrón taza con asa activo',
+    sortOptions: [['dist_desc','Más cerca del pivot'],
+      ['cup_asc','Profundidad de taza (asc)'],
+      ['handle_asc','Retroceso del asa (asc)'],
+      ['mktcap_desc','Market Cap (desc)'],
+      ['vol_desc','Volumen (desc)'],
+      ['price_desc','Precio (desc)'],
+      ['ticker_az','Ticker (A-Z)']
+    ],
+    sortFn: function(a,b,sort) {
+      switch(sort) { case 'dist_desc': return b[10]-a[10];
+        case 'cup_asc':      return a[5]-b[5];
+        case 'handle_asc':   return a[7]-b[7];
+        case 'mktcap_desc':  return parseMktCap(b[2])-parseMktCap(a[2]);
+        case 'vol_desc':     return parseNum(b[4])-parseNum(a[4]);
+        case 'price_desc':   return parseNum(b[3])-parseNum(a[3]);
+        case 'ticker_az':    return a[0].localeCompare(b[0]);
+        default: return 0;
+      }
+    },
+    renderCard: function(d) {
+      const [ticker, name, mktcap, price, volume, cupDepth, cupWeeks, handleDepth, handleWeeks, buyPoint, dist, cupStart, handleStart, lastDate] = d;
+      return `<div class="card" onclick="openChart('${ticker}')">
+    <div class="card-top">
+      ${logoBox(ticker)}
+      <div class="card-info">
+        <div class="ticker-row">
+          ${tickerSpan(ticker)}
+          <span class="dist-badge dist-orange">pivot $${buyPoint}</span>
+        </div>
+        <div class="company-name" title="${escapeHtml(name)}">${name}</div>
+      </div>
+    </div>
+    <div class="price-row">
+      <span class="price">$${price}</span>
+      <span class="mktcap">${fmtMktCap(mktcap)}</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat stat-green"><div class="stat-label">Taza</div><div class="stat-value">-${cupDepth.toFixed(1)}%</div></div>
+      <div class="stat stat-blue"><div class="stat-label">Duración taza</div><div class="stat-value">${cupWeeks} sem.</div></div>
+      <div class="stat stat-purple"><div class="stat-label">Asa</div><div class="stat-value">-${handleDepth.toFixed(1)}%</div></div>
+      <div class="stat stat-orange"><div class="stat-label">Duración asa</div><div class="stat-value">${handleWeeks} sem.</div></div>
+      <div class="stat stat-blue" style="grid-column: span 3;"><div class="stat-label">Taza desde ${cupStart} · Asa desde ${handleStart}</div><div class="stat-value" style="font-size:11px;">Al pivot: ${dist.toFixed(1)}% · Vol: ${fmtVol(volume)}</div></div>
+    </div>
+  </div>`;
+    }
+  },
+
   rsc: {
     title: 'RSC Mansfield · Top 15 vs S&P 500 (1 año)',
     data: DATA_RSC,
@@ -666,8 +722,8 @@ const SCREENERS = {
   coincidencias: {
     title: 'Screener · Coincidencias (3+ listas)',
     data: DATA_COINCIDENCIAS,
-    chips: ['Aparece en 3 o más de los 6 screeners', 'Cruce: Crecimiento, Acciones Top, Oneill, Banderas, RSC, RSC2'],
-    note: 'Este screener no aplica filtros propios: cruza los resultados de los otros 6 screeners y muestra los tickers que coinciden en al menos 3 de ellos, junto con el listado de en qué screeners aparecen.',
+    chips: ['Aparece en 3 o más de los 7 screeners', 'Cruce: Crecimiento, Acciones Top, Oneill, Banderas, Taza con Asa, RSC, RSC2'],
+    note: 'Este screener no aplica filtros propios: cruza los resultados de los otros 7 screeners y muestra los tickers que coinciden en al menos 3 de ellos, junto con el listado de en qué screeners aparecen.',
     counterLabel: 'valores coinciden en 3 o más screeners',
     sortOptions: [
       ['count_desc', 'Nº de coincidencias (desc)'],
